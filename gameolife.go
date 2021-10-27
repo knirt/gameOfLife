@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
+
+	"golang.org/x/term"
 )
 
 //////////////////////////////////////////////////////////////////////////////
@@ -16,6 +19,16 @@ import (
 //  only cells with 2 or 3 live neighbors SURVIVES							//
 //																			//
 //////////////////////////////////////////////////////////////////////////////
+
+//gets size of terminal window in rows/columns
+func terminalSize() [2]int {
+	width, height, err := term.GetSize(0)
+	if err != nil {
+		return [2]int{0, 0}
+	} else {
+		return [2]int{width, height}
+	}
+}
 
 //struct for generation of cells, a grid of true/false cells for alive/dead
 type Generation struct {
@@ -33,17 +46,32 @@ func makeGrid(width, height int) *Generation {
 	return &Generation{grid: grid, width: width, height: height}
 }
 
+//initial grid values should only be generated in a small range in the center of the grid, this
+//takes terminal size and returns dimentions to define range of initial values in grid
+func getInitialRange(termSize [2]int) [2]int {
+	width := math.Round(float64(termSize[0]) * 0.25)
+	height := math.Round(float64(termSize[1]) * 0.35)
+	x := int(width)
+	y := int(height)
+	return [2]int{x, y}
+}
+
 //assign values to initial grid
 func assignValues(initGrid *Generation) {
-	for i := 16; i < (initGrid.height - 16); i++ {
-		for j := 40; j < (initGrid.width - 45); j++ {
+
+	//define x and y as range of values to randomly update for initial grid
+	x := getInitialRange(terminalSize())[0]
+	y := getInitialRange(terminalSize())[1]
+
+	for i := y; i < (initGrid.height - y); i++ {
+		for j := x; j < (initGrid.width - x); j++ {
 
 			max := 9
 			min := 1
 
 			randomNum := rand.Intn(max-min) + min
 
-			if randomNum > 6 {
+			if randomNum > 5 {
 				initGrid.grid[i][j] = true
 			}
 		}
@@ -219,8 +247,11 @@ func main() {
 	funStyles()
 
 	//EXECUTION
+
+	//get terminal size
+	termSize := terminalSize()
 	//create, populate, and print initial grid
-	gen := Creation(153, 47)
+	gen := Creation(termSize[0]-1, termSize[1]-1)
 	assignValues(gen.a)
 	printGrid(gen)
 
